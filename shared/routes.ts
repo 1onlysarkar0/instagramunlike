@@ -21,7 +21,8 @@ export const api = {
       path: '/api/jobs',
       input: z.object({
         cookies: z.string().min(1, "Cookies are required"),
-        speed: z.number().min(1).max(50).optional(),
+        speed: z.number().min(1).max(200).optional(),
+        targetType: z.enum(["like", "comment"]).default("like"),
       }),
       responses: {
         201: z.custom<typeof jobs.$inferSelect>(),
