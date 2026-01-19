@@ -12,6 +12,7 @@ export const settings = pgTable("settings", {
 export const jobs = pgTable("jobs", {
   id: serial("id").primaryKey(),
   status: text("status").notNull().default("pending"), // pending, running, completed, failed, stopped
+  targetType: text("target_type").notNull().default("like"), // like, comment
   totalToProcess: integer("total_to_process").default(0),
   totalUnliked: integer("total_unliked").default(0),
   totalSkipped: integer("total_skipped").default(0),
@@ -40,6 +41,8 @@ export type Job = typeof jobs.$inferSelect;
 // Request types
 export type CreateJobRequest = {
   cookies: string; // JSON string of cookies
+  speed?: number;
+  targetType: "like" | "comment";
 };
 
 // Response types
