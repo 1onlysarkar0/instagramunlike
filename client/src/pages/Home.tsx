@@ -11,21 +11,23 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Terminal, ShieldAlert, Zap, Lock, Info, ExternalLink, RefreshCcw, Gauge, Rocket, Loader2 } from "lucide-react";
+import { Terminal, ShieldAlert, Zap, Lock, Info, RefreshCcw, Gauge, Rocket, Loader2, MessageSquare, Heart } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@shared/routes";
 import { Slider } from "@/components/ui/slider";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import { motion, AnimatePresence } from "framer-motion";
 
 export default function Home() {
   const [, setLocation] = useLocation();
   const [cookies, setCookies] = useState("");
   const [speed, setSpeed] = useState(20);
+  const [targetType, setTargetType] = useState<"like" | "comment">("like");
   const { mutate: createJob, isPending } = useCreateJob();
   const [error, setError] = useState<string | null>(null);
 
-  // Fetch saved cookies on mount
   const { data: savedData, isLoading: isLoadingCookies } = useQuery<{
     cookies: string;
   }>({
@@ -61,7 +63,7 @@ export default function Home() {
       setError(null);
 
       createJob(
-        { cookies, speed },
+        { cookies, speed, targetType },
         {
           onSuccess: (job) => {
             setLocation(`/jobs/${job.id}`);
@@ -75,7 +77,6 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-background relative overflow-hidden flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8">
-      {/* Animated background elements */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 0.5 }}
@@ -86,10 +87,8 @@ export default function Home() {
       <motion.div
         initial={{ y: 20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.5 }}
         className="max-w-4xl mx-auto w-full relative z-10 space-y-8"
       >
-        {/* Header */}
         <div className="text-center space-y-4">
           <motion.div
             whileHover={{ scale: 1.1, rotate: 5 }}
@@ -98,15 +97,38 @@ export default function Home() {
             <Zap className="w-8 h-8 text-primary" />
           </motion.div>
           <h1 className="text-4xl md:text-5xl font-bold tracking-tight bg-gradient-to-b from-white to-white/60 bg-clip-text text-transparent">
-            Instagram Unlike Automation
+            Instagram Cleanup Automation
           </h1>
           <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-            Automate the process of unliking posts to clean up your feed
-            activity. Secure, client-controlled, and terminal-styled.
+            Automate the process of unliking posts or deleting comments to clean up your feed.
           </p>
         </div>
 
-        {/* Warning Alert */}
+        <motion.div
+          initial={{ x: 20, opacity: 0 }}
+          animate={{ x: 0, opacity: 1 }}
+          transition={{ delay: 0.1 }}
+          className="flex justify-center"
+        >
+          <Card className="glass-card border-white/10 p-2 inline-flex items-center gap-4">
+            <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-black/20">
+              <Label htmlFor="target-toggle" className="flex items-center gap-2 cursor-pointer">
+                <Heart className={`w-4 h-4 ${targetType === "like" ? "text-primary" : "text-muted-foreground"}`} />
+                <span className={targetType === "like" ? "text-primary font-bold" : "text-muted-foreground"}>Likes</span>
+              </Label>
+              <Switch
+                id="target-toggle"
+                checked={targetType === "comment"}
+                onCheckedChange={(checked) => setTargetType(checked ? "comment" : "like")}
+              />
+              <Label htmlFor="target-toggle" className="flex items-center gap-2 cursor-pointer">
+                <MessageSquare className={`w-4 h-4 ${targetType === "comment" ? "text-primary" : "text-muted-foreground"}`} />
+                <span className={targetType === "comment" ? "text-primary font-bold" : "text-muted-foreground"}>Comments</span>
+              </Label>
+            </div>
+          </Card>
+        </motion.div>
+
         <motion.div
           initial={{ x: -20, opacity: 0 }}
           animate={{ x: 0, opacity: 1 }}
@@ -126,7 +148,6 @@ export default function Home() {
           </Alert>
         </motion.div>
 
-        {/* Main Input Card */}
         <Card className="glass-card border-white/10 shadow-2xl overflow-hidden hover:border-primary/20 transition-colors duration-500">
           <CardHeader className="border-b border-white/5 bg-black/20 pb-8">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -175,7 +196,6 @@ export default function Home() {
               </div>
             </div>
           </CardHeader>
-
           <CardContent className="p-0">
             <div className="relative group">
               <Textarea
@@ -184,52 +204,43 @@ export default function Home() {
                 placeholder="["
                 className="min-h-[300px] w-full bg-black/50 border-0 rounded-none p-6 font-mono text-xs md:text-sm text-green-400 placeholder:text-green-900/50 focus-visible:ring-0 resize-none selection:bg-green-900/30"
               />
-              <div className="absolute bottom-4 right-4 text-xs text-muted-foreground pointer-events-none opacity-50 group-hover:opacity-100 transition-opacity">
-                {cookies.length} chars
-              </div>
             </div>
-
             <div className="p-6 bg-white/5 border-t border-white/5 flex flex-col md:flex-row items-center justify-between gap-4">
               <div className="text-sm text-muted-foreground flex items-center gap-2">
                 <Info className="w-4 h-4" />
                 <span>Use a browser extension to export JSON</span>
               </div>
-
               <div className="flex flex-col md:flex-row gap-3 w-full md:w-auto">
                 <Button
                   size="lg"
                   variant="outline"
                   onClick={handleClearSession}
-                  className="w-full md:w-auto border-white/10 hover:bg-white/5 hover-elevate active-elevate-2"
+                  className="w-full md:w-auto border-white/10 hover:bg-white/5"
                 >
                   <RefreshCcw className="w-4 h-4 mr-2" />
                   Clear Session
                 </Button>
-
                 <Button
                   size="lg"
                   onClick={handleSubmit}
                   disabled={isPending || isLoadingCookies}
-                  className="w-full md:w-auto min-w-[200px] bg-primary text-primary-foreground hover:bg-primary/90 font-bold shadow-lg shadow-primary/20 hover-elevate active-elevate-2"
+                  className="w-full md:w-auto min-w-[200px] bg-primary text-primary-foreground font-bold shadow-lg"
                 >
                   {isPending ? (
                     <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                  ) : speed > 150 ? (
-                    <Rocket className="w-4 h-4 mr-2" />
                   ) : (
                     <Zap className="w-4 h-4 mr-2" />
                   )}
-                  {isPending ? "Initializing..." : "Start Sequence"}
+                  {isPending ? "Initializing..." : `Start ${targetType === "like" ? "Unlike" : "Delete"} Sequence`}
                 </Button>
               </div>
             </div>
-
             <AnimatePresence>
               {error && (
                 <motion.div
-                  initial={{ height: 0, opacity: 0 }}
-                  animate={{ height: "auto", opacity: 1 }}
-                  exit={{ height: 0, opacity: 0 }}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
                   className="px-6 pb-6 text-red-400 text-sm font-medium"
                 >
                   ⚠ {error}
